@@ -14,6 +14,12 @@ Language changes
 Multi-threading changes
 -----------------------
 
+Many task synchronization operations are now thread-safe,
+as are many I/O operations.
+
+Tasks can now be run on any thread. They are no longer restricted on only be
+used inside an `@threads` region. The novel partr algorithm is now
+the default for scheduling multi-threaded workloads ([#31398]).
 
 Build system changes
 --------------------

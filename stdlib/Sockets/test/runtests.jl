@@ -142,15 +142,17 @@ defaultport = rand(2000:4000)
 
     mktempdir() do tmpdir
         socketname = Sys.iswindows() ? ("\\\\.\\pipe\\uv-test-" * randstring(6)) : joinpath(tmpdir, "socket")
-        s = listen(socketname)
-        tsk = @async begin
-            sock = accept(s)
-            write(sock, "Hello World\n")
-            close(s)
-            close(sock)
+        local nconn = 0
+        srv = listen(socketname)
+        t = accept(srv) do client
+            write(client, "Hello World $(nconn += 1)\n")
+            close(client)
         end
-        @test read(connect(socketname), String) == "Hello World\n"
-        wait(tsk)
+        @test read(connect(socketname), String) == "Hello World 1\n"
+        @test read(connect(socketname), String) == "Hello World 2\n"
+        @test read(connect(socketname), String) == "Hello World 3\n"
+        close(srv)
+        wait(t)
     end
 end
 

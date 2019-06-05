@@ -484,10 +484,14 @@ function socket_reuse_port()
     end
 end
 
-function bind_client_port(s)
+# TODO: this doesn't belong here, it belongs in Sockets
+function bind_client_port(s::TCPSocket)
+    Sockets.iolock_begin()
+    Sockets.check_open(s)
     err = ccall(:jl_tcp_bind, Int32, (Ptr{Cvoid}, UInt16, UInt32, Cuint),
-                            s.handle, hton(client_port[]), hton(UInt32(0)), 0)
-    uv_error("bind() failed", err)
+                s.handle, hton(client_port[]), hton(UInt32(0)), 0)
+    Sockets.iolock_end()
+    uv_error("tcp_bind", err)
 
     _addr, port = getsockname(s)
     client_port[] = port

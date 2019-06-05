@@ -1181,15 +1181,21 @@ function interrupt(pids::AbstractVector=workers())
 end
 
 
-function disable_nagle(sock)
+# TODO: this doesn't belong here, it belongs in Sockets
+function disable_nagle(sock::TCPSocket)
     # disable nagle on all OSes
-    ccall(:uv_tcp_nodelay, Cint, (Ptr{Cvoid}, Cint), sock.handle, 1)
+    Sockets.iolock_begin()
+    Sockets.check_open(sock)
+    err = ccall(:uv_tcp_nodelay, Cint, (Ptr{Cvoid}, Cint), sock.handle, 1)
+    # TODO: uv_error("tcp_nodelay", err)
     @static if Sys.islinux()
         # tcp_quickack is a linux only option
         if ccall(:jl_tcp_quickack, Cint, (Ptr{Cvoid}, Cint), sock.handle, 1) < 0
             @warn "Networking unoptimized ( Error enabling TCP_QUICKACK : $(Libc.strerror(Libc.errno())) )" maxlog=1
         end
     end
+    Sockets.iolock_end()
+    nothing
 end
 
 wp_bind_addr(p::LocalProcess) = p.bind_addr

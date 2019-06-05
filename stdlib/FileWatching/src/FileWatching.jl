@@ -20,7 +20,8 @@ export
 
 import Base: @handle_as, wait, close, eventloop, notify_error, stream_wait, IOError,
     _sizeof_uv_poll, _sizeof_uv_fs_poll, _sizeof_uv_fs_event, _uv_hook_close, uv_error, _UVError,
-    associate_julia_struct, disassociate_julia_struct, isreadable, iswritable, |
+    iolock_begin, iolock_end, associate_julia_struct, disassociate_julia_struct,
+    isreadable, iswritable, |
 import Base.Filesystem.StatStruct
 if Sys.iswindows()
     import Base.WindowsRawSocket
@@ -80,11 +81,13 @@ mutable struct FileMonitor
         handle = Libc.malloc(_sizeof_uv_fs_event)
         this = new(handle, file, Base.ThreadSynchronizer(), 0, false)
         associate_julia_struct(handle, this)
+        iolock_begin()
         err = ccall(:uv_fs_event_init, Cint, (Ptr{Cvoid}, Ptr{Cvoid}), eventloop(), handle)
         if err != 0
             Libc.free(handle)
             throw(_UVError("FileMonitor", err))
         end
+        iolock_end()
         finalizer(uvfinalize, this)
         return this
     end
@@ -100,6 +103,7 @@ mutable struct FolderMonitor
         handle = Libc.malloc(_sizeof_uv_fs_event)
         this = new(handle, Channel(Inf), false)
         associate_julia_struct(handle, this)
+        iolock_begin()
         err = ccall(:uv_fs_event_init, Cint, (Ptr{Cvoid}, Ptr{Cvoid}), eventloop(), handle)
         if err != 0
             Libc.free(handle)
@@ -110,6 +114,7 @@ mutable struct FolderMonitor
         uv_error("FolderMonitor (start)",
                  ccall(:uv_fs_event_start, Int32, (Ptr{Cvoid}, Ptr{Cvoid}, Cstring, Int32),
                        handle, uv_jl_fseventscb_folder::Ptr{Cvoid}, folder, 0))
+        iolock_end()
         return this
     end
 end
@@ -127,12 +132,14 @@ mutable struct PollingFileWatcher
         handle = Libc.malloc(_sizeof_uv_fs_poll)
         this = new(handle, file, round(UInt32, interval * 1000), Base.ThreadSynchronizer(), false, 0, StatStruct())
         associate_julia_struct(handle, this)
+        iolock_begin()
         err = ccall(:uv_fs_poll_init, Int32, (Ptr{Cvoid}, Ptr{Cvoid}), eventloop(), handle)
         if err != 0
             Libc.free(handle)
             throw(_UVError("PollingFileWatcher", err))
         end
         finalizer(uvfinalize, this)
+        iolock_end()
         return this
     end
 end
@@ -153,6 +160,7 @@ mutable struct _FDWatcher
                     throw(ArgumentError("must specify at least one of readable or writable to create a FDWatcher"))
                 end
                 fdnum = Core.Intrinsics.bitcast(Int32, fd) + 1
+                iolock_begin()
                 if fdnum > length(FDWatchers)
                     old_len = length(FDWatchers)
                     resize!(FDWatchers, fdnum)
@@ -182,11 +190,13 @@ mutable struct _FDWatcher
                 end
                 finalizer(uvfinalize, this)
                 FDWatchers[fdnum] = this
+                iolock_end()
                 return this
             end
         end
 
         function uvfinalize(t::_FDWatcher)
+            iolock_begin()
             lock(t.notify)
             try
                 if t.handle != C_NULL
@@ -205,6 +215,7 @@ mutable struct _FDWatcher
             finally
                 unlock(t.notify)
             end
+            iolock_end()
             nothing
         end
     end
@@ -228,8 +239,10 @@ mutable struct _FDWatcher
                 0,
                 (false, false))
             associate_julia_struct(handle, this)
-            err = ccall(:uv_poll_init, Int32, (Ptr{Cvoid},   Ptr{Cvoid}, WindowsRawSocket),
-                                               eventloop(), handle,    fd)
+            iolock_begin()
+            err = ccall(:uv_poll_init, Int32, (Ptr{Cvoid},  Ptr{Cvoid}, WindowsRawSocket),
+                                               eventloop(), handle,     fd)
+            iolock_end()
             if err != 0
                 Libc.free(handle)
                 throw(_UVError("FDWatcher", err))
@@ -261,12 +274,15 @@ end
 
 
 function close(t::_FDWatcher, readable::Bool, writable::Bool)
+    iolock_begin()
     if t.refcount != (0, 0)
         t.refcount = (t.refcount[1] - Int(readable), t.refcount[2] - Int(writable))
     end
     if t.refcount == (0, 0)
         uvfinalize(t)
     end
+    iolock_end()
+    nothing
 end
 
 function close(t::FDWatcher)
@@ -403,6 +419,7 @@ function __init__()
 end
 
 function start_watching(t::_FDWatcher)
+    iolock_begin()
     t.handle == C_NULL && return throw(ArgumentError("FDWatcher is closed"))
     readable = t.refcount[1] > 0
     writable = t.refcount[2] > 0
@@ -415,10 +432,12 @@ function start_watching(t::_FDWatcher)
                        uv_jl_pollcb::Ptr{Cvoid}))
         t.active = (readable, writable)
     end
+    iolock_end()
     nothing
 end
 
 function start_watching(t::PollingFileWatcher)
+    iolock_begin()
     t.handle == C_NULL && return throw(ArgumentError("PollingFileWatcher is closed"))
     if !t.active
         uv_error("PollingFileWatcher (start)",
@@ -426,10 +445,12 @@ function start_watching(t::PollingFileWatcher)
                        t.handle, uv_jl_fspollcb::Ptr{Cvoid}, t.file, t.interval))
         t.active = true
     end
+    iolock_end()
     nothing
 end
 
 function stop_watching(t::PollingFileWatcher)
+    iolock_begin()
     lock(t.notify)
     try
         if t.active && isempty(t.notify)
@@ -440,10 +461,12 @@ function stop_watching(t::PollingFileWatcher)
     finally
         unlock(t.notify)
     end
+    iolock_end()
     nothing
 end
 
 function start_watching(t::FileMonitor)
+    iolock_begin()
     t.handle == C_NULL && return throw(ArgumentError("FileMonitor is closed"))
     if !t.active
         uv_error("FileMonitor (start)",
@@ -451,10 +474,12 @@ function start_watching(t::FileMonitor)
                        t.handle, uv_jl_fseventscb_file::Ptr{Cvoid}, t.file, 0))
         t.active = true
     end
+    iolock_end()
     nothing
 end
 
 function stop_watching(t::FileMonitor)
+    iolock_begin()
     lock(t.notify)
     try
         if t.active && isempty(t.notify)
@@ -465,6 +490,7 @@ function stop_watching(t::FileMonitor)
     finally
         unlock(t.notify)
     end
+    iolock_end()
     nothing
 end
 
@@ -473,7 +499,9 @@ function wait(fdw::FDWatcher)
         return wait(fdw.watcher, readable = fdw.readable, writable = fdw.writable)
     end
 end
+
 function wait(fdw::_FDWatcher; readable=true, writable=true)
+    # TODO: this code was incorrectly modified for thread-safety
     events = FDEvent(Int32(0))
     while true
         if isa(events, FDEvent)

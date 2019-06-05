@@ -71,6 +71,17 @@ void JL_UV_LOCK(void)
     }
 }
 
+JL_DLLEXPORT void jl_iolock_begin(void)
+{
+    JL_UV_LOCK();
+}
+
+JL_DLLEXPORT void jl_iolock_end(void)
+{
+    JL_UV_UNLOCK();
+}
+
+
 void jl_uv_call_close_callback(jl_value_t *val)
 {
     jl_value_t *args[2];
@@ -94,11 +105,11 @@ static void jl_uv_closeHandle(uv_handle_t *handle)
         JL_STDERR = (JL_STREAM*)STDERR_FILENO;
     // also let the client app do its own cleanup
     if (handle->type != UV_FILE && handle->data) {
-        size_t last_age = jl_get_ptls_states()->world_age;
-        // TODO: data race on jl_world_counter across many files, to be fixed in a separate revision
-        jl_get_ptls_states()->world_age = jl_world_counter;
+        jl_ptls_t ptls = jl_get_ptls_states();
+        size_t last_age = ptls->world_age;
+        ptls->world_age = jl_world_counter;
         jl_uv_call_close_callback((jl_value_t*)handle->data);
-        jl_get_ptls_states()->world_age = last_age;
+        ptls->world_age = last_age;
     }
     if (handle == (uv_handle_t*)&signal_async)
         return;
@@ -268,7 +279,9 @@ JL_DLLEXPORT void jl_forceclose_uv(uv_handle_t *handle)
     // avoid double-closing the stream
     if (!uv_is_closing(handle)) {
         JL_UV_LOCK();
-        uv_close(handle, &jl_uv_closeHandle);
+        if (!uv_is_closing(handle)) {
+            uv_close(handle, &jl_uv_closeHandle);
+        }
         JL_UV_UNLOCK();
     }
 }
@@ -901,7 +914,7 @@ JL_DLLEXPORT int jl_tcp6_connect(uv_tcp_t *handle, void *host, uint16_t port,
     memcpy(&addr.sin6_addr, host, 16);
     addr.sin6_port = port;
     JL_UV_LOCK();
-    int r = uv_tcp_connect(req,handle,(struct sockaddr*)&addr,cb);
+    int r = uv_tcp_connect(req, handle, (struct sockaddr*)&addr, cb);
     JL_UV_UNLOCK();
     return r;
 }
@@ -912,7 +925,7 @@ JL_DLLEXPORT int jl_connect_raw(uv_tcp_t *handle,struct sockaddr_storage *addr,
     uv_connect_t *req = (uv_connect_t*)malloc(sizeof(uv_connect_t));
     req->data = 0;
     JL_UV_LOCK();
-    int r = uv_tcp_connect(req,handle,(struct sockaddr*)addr,cb);
+    int r = uv_tcp_connect(req, handle, (struct sockaddr*)addr, cb);
     JL_UV_UNLOCK();
     return r;
 }
@@ -1084,94 +1097,6 @@ JL_DLLEXPORT int jl_queue_work(work_cb_t work_func, void *work_args, void *work_
 
     return 0;
 }
-
-JL_DLLEXPORT void jl_uv_update_timer_start(uv_loop_t* loop, jl_value_t* jltimer,
-                                          uv_timer_t* uvtimer, uv_timer_cb cb,
-                                          uint64_t timeout, uint64_t repeat)
-{
-    JL_UV_LOCK();
-    int err = uv_timer_init(loop, uvtimer);
-    if (err)
-        abort();
-
-    jl_uv_associate_julia_struct((uv_handle_t*)uvtimer, jltimer);
-    uv_update_time(loop);
-    err = uv_timer_start(uvtimer, cb, timeout, repeat);
-    if (err)
-        abort();
-    JL_UV_UNLOCK();
-}
-
-JL_DLLEXPORT void jl_uv_stop(uv_loop_t* loop)
-{
-    JL_UV_LOCK();
-    uv_stop(loop);
-    // TODO: use memory/compiler fence here instead of the lock
-    JL_UV_UNLOCK();
-}
-
-JL_DLLEXPORT int jl_uv_fs_scandir(uv_loop_t* loop, uv_fs_t* req, const char* path, int flags,
-                                  uv_fs_cb cb)
-{
-    JL_UV_LOCK();
-    int r = uv_fs_scandir(loop, req, path, flags, cb);
-    JL_UV_UNLOCK();
-    return r;
-}
-
-JL_DLLEXPORT int jl_uv_fs_readlink(uv_loop_t* loop, uv_fs_t* req, const char* path,
-                                   uv_fs_cb cb)
-{
-    JL_UV_LOCK();
-    int r = uv_fs_readlink(loop, req, path, cb);
-    JL_UV_UNLOCK();
-    return r;
-}
-
-JL_DLLEXPORT int jl_uv_fs_open(uv_loop_t* loop, uv_fs_t* req, const char* path, int flags,
-                               int mode, uv_fs_cb cb)
-{
-    JL_UV_LOCK();
-    int r = uv_fs_open(loop, req, path, flags, mode, cb);
-    JL_UV_UNLOCK();
-    return r;
-}
-
-JL_DLLEXPORT int jl_uv_fs_ftruncate(uv_loop_t* loop, uv_fs_t* req, uv_os_fd_t handle,
-                                    int64_t offset, uv_fs_cb cb)
-{
-    JL_UV_LOCK();
-    int r = uv_fs_ftruncate(loop, req, handle, offset, cb);
-    JL_UV_UNLOCK();
-    return r;
-}
-
-JL_DLLEXPORT int jl_uv_fs_futime(uv_loop_t* loop, uv_fs_t* req, uv_os_fd_t handle, double atime,
-                                 double mtime, uv_fs_cb cb)
-{
-    JL_UV_LOCK();
-    int r = uv_fs_futime(loop, req, handle, atime, mtime, cb);
-    JL_UV_UNLOCK();
-    return r;
-}
-
-JL_DLLEXPORT int jl_uv_read_start(uv_stream_t* handle, uv_alloc_cb alloc_cb,
-                                  uv_read_cb read_cb)
-{
-    JL_UV_LOCK();
-    int r = uv_read_start(handle, alloc_cb, read_cb);
-    JL_UV_UNLOCK();
-    return r;
-}
-
-JL_DLLEXPORT int jl_uv_read_stop(uv_stream_t* handle)
-{
-    JL_UV_LOCK();
-    int r = uv_read_stop(handle);
-    JL_UV_UNLOCK();
-    return r;
-}
-
 
 #ifndef _OS_WINDOWS_
 #if defined(__APPLE__)

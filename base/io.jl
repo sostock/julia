@@ -61,7 +61,6 @@ Close an I/O stream. Performs a [`flush`](@ref) first.
 """
 function close end
 function flush end
-function wait_connected end
 function wait_readnb end
 function wait_readbyte end
 function wait_close end
