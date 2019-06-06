@@ -234,9 +234,20 @@ ip"fe80::9731:35af:e1c5:6e49"
 """
 function getipaddr(addr_type::Type{T}) where T<:IPAddr
     addrs = getipaddrs(addr_type)
+
     if length(addrs) == 0
         error("No networking interface available")
     end
+
+    # Prefer IPv4 addresses over IPv6 maintaining the ordering provided by libuv
+    sort!(addrs, lt=(x,y) -> begin
+        if x isa IPv4 && y isa IPv6
+            return true
+        else
+            return false
+        end
+    end)
+
     return addrs[1]
 end
 getipaddr() = getipaddr(IPv4)
@@ -295,14 +306,5 @@ function getipaddrs(addr_type::Type{T}=IPAddr; loopback::Bool=false) where T<:IP
         end
     end
     ccall(:uv_free_interface_addresses, Cvoid, (Ptr{UInt8}, Int32), addr, count)
-    sort!(addresses, lt=(addr1,addr2) -> begin
-        if addr1 isa IPv4 && addr2 isa IPv6
-            return true
-        elseif addr1 isa IPv6 && addr2 isa IPv4
-            return false
-        else
-            return addr1 < addr2
-        end
-    end)
     return addresses
 end
