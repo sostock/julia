@@ -309,11 +309,11 @@ function *(x::Rational, y::Rational)
     xd, yn = divgcd(x.den, y.num)
     unsafe_rational(checked_mul(xn, yn), checked_mul(xd, yd))
 end
-function *(x::Rational, y::Integer)
+function *(x::Rational, y::Integer)::promote_type(typeof(x), typeof(y))
     xd, yn = divgcd(x.den, y)
     unsafe_rational(checked_mul(x.num, yn), xd)
 end
-function *(y::Integer, x::Rational)
+function *(y::Integer, x::Rational)::promote_type(typeof(x), typeof(y))
     yn, xd = divgcd(y, x.den)
     unsafe_rational(checked_mul(yn, x.num), xd)
 end

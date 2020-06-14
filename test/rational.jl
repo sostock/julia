@@ -574,4 +574,10 @@ end
     @test Int8(1) + Int8(4)//(Int8(127)-Int8(1)) == Int8(65) // Int8(63)
     @test -Int32(1) // typemax(Int32) - Int32(1) == typemin(Int32) // typemax(Int32)
     @test 1 // (typemax(Int128) + BigInt(1)) - 2 == (1 + BigInt(2)*typemin(Int128)) // (BigInt(1) + typemax(Int128))
+
+    # issue #36277
+    inttypes = [Int8, Int16, Int32, Int64, Int128, BigInt, UInt8, UInt16, UInt32, UInt64, UInt128]
+    for T in inttypes, S in inttypes
+        @test typeof(one(Rational{T}) * one(S)) == typeof(one(S) * one(Rational{T})) == promote_type(Rational{T}, S)
+    end
 end
