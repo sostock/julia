@@ -795,6 +795,7 @@ timesofar("dequeue")
     b1 = bitrand(n1, n2)
     @check_bit_operation broadcast(~, b1)  BitMatrix
     @check_bit_operation broadcast(!, b1)  BitMatrix
+    @check_bit_operation (+)(b1)  Matrix{Int}
     @check_bit_operation (-)(b1)  Matrix{Int}
     @check_bit_operation broadcast(sign, b1) BitMatrix
     @check_bit_operation real(b1) BitMatrix
@@ -804,6 +805,7 @@ timesofar("dequeue")
     b0 = falses(0)
     @check_bit_operation broadcast(~, b0)  BitVector
     @check_bit_operation broadcast(!, b0)  BitVector
+    @check_bit_operation (+)(b0)  Vector{Int}
     @check_bit_operation (-)(b0)  Vector{Int}
     @check_bit_operation broadcast(sign, b0) BitVector
 

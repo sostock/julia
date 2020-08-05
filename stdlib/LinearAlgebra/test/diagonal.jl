@@ -391,6 +391,10 @@ Random.seed!(1)
         @test svd(D).V == V
     end
 
+    @testset "copying behavior of unary plus (issue #33271)" begin
+        @test (+D)::typeof(D) == DM
+        @test +D !== D
+    end
 end
 
 @testset "svdvals and eigvals (#11120/#11247)" begin
@@ -724,6 +728,11 @@ end
     @test zeros(0)'*Diagonal(zeros(0))*zeros(0) === 0.0
     @test transpose(zeros(0))*Diagonal(zeros(Complex{Int}, 0))*zeros(0) === 0.0 + 0.0im
     @test dot(zeros(Int32, 0), Diagonal(zeros(Int, 0)), zeros(Int16, 0)) === 0
+end
+
+@testset "copying behavior of unary plus (issue #33271)" begin
+    A = Diagonal([true false; false false])
+    @test (+A)::Diagonal{Int} == A
 end
 
 end # module TestDiagonal

@@ -1457,4 +1457,14 @@ end
     end
 end
 
+@testset "unary plus (issue #33271)" begin
+    A = SparseVector(5, [1,3], [true, true])
+    @test +A isa SparseVector{Int}
+    @test +A == A
+    B = SparseVector(5, [1,3], [-0.5, 0.5])
+    @test +B isa SparseVector{Float64}
+    @test +B == B
+    @test +B !== B
+end
+
 end # module

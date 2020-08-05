@@ -55,6 +55,9 @@ let n = 10
         H = UpperHessenberg(Areal)
         @test Array(Hc + H) == Array(Hc) + Array(H)
         @test Array(Hc - H) == Array(Hc) - Array(H)
+        @test (-H)::typeof(H) == UpperHessenberg(-A)
+        @test (+H)::typeof(H) == H
+        @test (+H) !== H
     end
 
     @testset for eltya in (Float32, Float64, ComplexF32, ComplexF64, Int), herm in (false, true)

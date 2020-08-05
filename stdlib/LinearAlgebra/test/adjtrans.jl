@@ -557,4 +557,21 @@ end
     @test transpose(Int[]) * Int[] == 0
 end
 
+@testset "unary plus/minus" begin
+    A = rand(3,3)
+    AA = adjoint(A)
+    TA = transpose(A)
+    @test (-AA)::Adjoint{Float64,Matrix{Float64}} == adjoint(-A)
+    @test (+AA)::Adjoint{Float64,Matrix{Float64}} == AA
+    @test +AA !== AA
+    @test (-TA)::Transpose{Float64,Matrix{Float64}} == transpose(-A)
+    @test (+TA)::Transpose{Float64,Matrix{Float64}} == TA
+    @test +TA !== TA
+    A = rand(Bool, 3, 3)
+    AA = adjoint(A)
+    TA = transpose(A)
+    @test (+AA)::Adjoint{Int,Matrix{Int}} == AA::Adjoint{Bool,Matrix{Bool}}
+    @test (+TA)::Transpose{Int,Matrix{Int}} == TA::Transpose{Bool,Matrix{Bool}}
+end
+
 end # module TestAdjointTranspose

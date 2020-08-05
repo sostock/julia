@@ -1939,6 +1939,16 @@ end
     @test -A == B
 end
 
+@testset "unary plus (issue #33271)" begin
+    A = sparse([1,3], [1,3], [true, true])
+    @test +A isa SparseMatrixCSC{Int}
+    @test +A == A
+    B = sparse([1,3], [1,3], [-0.5, 0.5])
+    @test +B isa SparseMatrixCSC{Float64}
+    @test +B == B
+    @test +B !== B
+end
+
 @testset "sparse matrix norms" begin
     Ac = sprandn(10,10,.1) + im* sprandn(10,10,.1)
     Ar = sprandn(10,10,.1)

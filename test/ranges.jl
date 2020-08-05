@@ -1627,3 +1627,11 @@ end
         @test eltype(T(1:5)) === eltype(T(1:5)[1:2])
     end
 end
+
+@testset "unary +" begin
+    for T = (Base.OneTo{Int}, UnitRange{Int}, StepRange{Int,Int}, StepRangeLen{Float64}, LinRange{Float32})
+        @test +T(1:5) === T(1:5)
+    end
+    @test +(false:true) === 0:1
+    @test +(false:true:true) === 0:1:1
+end

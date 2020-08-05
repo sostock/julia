@@ -88,8 +88,13 @@ end
             @testset "Unary minus for Symmetric/Hermitian matrices" begin
                 @test (-Symmetric(asym))::typeof(Symmetric(asym)) == -asym
                 @test (-Hermitian(aherm))::typeof(Hermitian(aherm)) == -aherm
-                @test (-Symmetric([true true; false false]))::Symmetric{Int,Matrix{Int}} == [-1 -1; -1 0]
-                @test (-Hermitian([true false; true false]))::Hermitian{Int,Matrix{Int}} == [-1 0; 0 0]
+            end
+
+            @testset "copying behavior of unary plus (issue #33271)" begin
+                @test (+Symmetric(asym))::typeof(Symmetric(asym)) == asym
+                @test (+Symmetric(asym))::typeof(Symmetric(asym)) !== Symmetric(asym)
+                @test (+Hermitian(aherm))::typeof(Hermitian(aherm)) == aherm
+                @test (+Hermitian(aherm))::typeof(Hermitian(aherm)) !== Hermitian(aherm)
             end
 
             @testset "Addition and subtraction for Symmetric/Hermitian matrices" begin
@@ -412,6 +417,13 @@ end
             end
         end
     end
+end
+
+@testset "Unary plus/minus for Symmetric{Bool}/Hermitian{Bool}" begin
+    @test (-Symmetric([true true; false false]))::Symmetric{Int,Matrix{Int}} == [-1 -1; -1 0]
+    @test (-Hermitian([true false; true false]))::Hermitian{Int,Matrix{Int}} == [-1 0; 0 0]
+    @test (+Symmetric([true true; false false]))::Symmetric{Int,Matrix{Int}} == [1 1; 1 0]
+    @test (+Hermitian([true false; true false]))::Hermitian{Int,Matrix{Int}} == [1 0; 0 0]
 end
 
 #Issue #7647: test xsyevr, xheevr, xstevr drivers.

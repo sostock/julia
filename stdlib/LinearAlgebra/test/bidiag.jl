@@ -314,6 +314,8 @@ Random.seed!(1)
 
         @testset "Binary operations" begin
             @test -T == Bidiagonal(-T.dv,-T.ev,T.uplo)
+            @test +T == Bidiagonal(+T.dv,+T.ev,T.uplo)
+            @test +T !== T
             @test convert(elty,-1.0) * T == Bidiagonal(-T.dv,-T.ev,T.uplo)
             @test T / convert(elty,-1.0) == Bidiagonal(-T.dv,-T.ev,T.uplo)
             @test T * convert(elty,-1.0) == Bidiagonal(-T.dv,-T.ev,T.uplo)
@@ -386,6 +388,10 @@ end
 let A = Bidiagonal([1,2,3], [0,0], :U)
     @test istril(A)
     @test isdiag(A)
+end
+
+let A = Bidiagonal([true, false, true], [false, true], :U)
+    @test (+A)::Bidiagonal{Int} == A::Bidiagonal{Bool}
 end
 
 # test construct from range

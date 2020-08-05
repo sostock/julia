@@ -299,6 +299,10 @@ end
             @test mA isa mat_type
             @test -mA == A
         end
+        @testset "Unary plus" begin
+            @test (+A)::mat_type == A
+            @test +A !== A
+        end
         if mat_type == SymTridiagonal
             @testset "Tridiagonal/SymTridiagonal mixing ops" begin
                 B = convert(Tridiagonal{elty}, A)
@@ -574,6 +578,13 @@ end
     dl = rand(Float64, 4)
     T = Tridiagonal(dl, d, du)
     @test_throws ArgumentError SymTridiagonal{Float32}(T)
+end
+
+@testset "Unary plus" begin
+    T = Tridiagonal([true, false], [true, false, true], [true, false])
+    S = SymTridiagonal(T)
+    @test (+T)::Tridiagonal{Int} == T::Tridiagonal{Bool}
+    @test (+S)::SymTridiagonal{Int} == S::SymTridiagonal{Bool}
 end
 
 end # module TestTridiagonal

@@ -173,7 +173,10 @@ for elty1 in (Float32, Float64, BigFloat, ComplexF32, ComplexF64, Complex{BigFlo
         @test abs.(A1) == abs.(Matrix(A1))
 
         # Unary operations
-        @test -A1 == -Matrix(A1)
+        @test (-A1)::t1 == -Matrix(A1)
+        @test (+A1)::t1 == Matrix(A1)
+        # copying behavior of unary plus (issue #33271)
+        @test +A1 !== A1
 
         # copy and copyto! (test views as well, see issue #14317)
         let vrange = 1:n-1, viewA1 = t1(view(A1.data, vrange, vrange))
@@ -656,4 +659,12 @@ let A = [0.9999999999999998 4.649058915617843e-16 -1.3149405273715513e-16 9.9959
     B = [0.09648289218436859 0.023497875751503007 0.0 0.0; 0.023497875751503007 0.045787575150300804 0.0 0.0; 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0]
     @test sqrt(A*B*A')^2 ≈ A*B*A'
 end
+
+# copying behavior of unary plus (issue #33271)
+let A = [true false; true true]
+    for T = (LowerTriangular, UnitLowerTriangular, UpperTriangular, UnitUpperTriangular)
+        @test +(T(A))::T{Int} == T(A)
+    end
+end
+
 end # module TestTriangular

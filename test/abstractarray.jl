@@ -742,6 +742,13 @@ end
         @test +(A) == A
         @test *(A) == A
     end
+    @testset "copying behavior of unary + (issue #33271)" begin
+        for A = (ones(), rand(3), rand(3,3), rand(3,3,3))
+            @test +(A) == A
+            @test +(A) !== A
+        end
+        @test eltype(+ones(Bool, 1)) === Int
+    end
 end
 
 @testset "reverse dim on empty" begin
