@@ -1280,3 +1280,22 @@ end
     @test Int[0 t...; t... 0] == [0 1 2; 1 2 0]
     @test_throws ArgumentError Int[t...; 3 4 5]
 end
+
+struct AliasCheckArray{T<:AbstractMatrix{Float64}} <: AbstractMatrix{Float64}
+    f1::Int
+    f2::Vector{Int}
+    f3::UnitRange{BigInt}
+    f4::T
+end
+
+@testset "dataids_fields and unaliascopy_fields" begin
+    f1, f2, f3, f4 = 1, [1,2,3], big(1):big(3), adjoint(rand(3,3))
+    A = AliasCheckArray(f1, f2, f3, f4)
+    @test @inferred(Base.dataids_fields(A)) === (Base.dataids(f2)..., Base.dataids(f4)...)
+    A′ = @inferred(Base.unaliascopy_fields(A))
+    @test typeof(A′) === typeof(A)
+    @test A′.f1 === A.f1
+    @test A′.f2 == A.f2
+    @test A′.f3 === A.f3
+    @test A′.f4 == A.f4
+end

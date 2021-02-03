@@ -1375,6 +1375,15 @@ _unaliascopy(A, C) = throw(ArgumentError("""
 unaliascopy(A) = A
 
 """
+    Base.unaliascopy_fields(A::AbstractArray)
+
+Make a copy of `A` by calling `unaliascopy` on each field of `A` and calling the `typeof(A)`
+constructor with the results as arguments.
+"""
+unaliascopy_fields(A::AbstractArray) =
+    typeof(A)(map(unaliascopy, ntuple(i -> getfield(A,i), Val(nfields(A))))...)
+
+"""
     Base.mightalias(A::AbstractArray, B::AbstractArray)
 
 Perform a conservative test to check if arrays `A` and `B` might share the same memory.
@@ -1409,6 +1418,15 @@ dataids(A::AbstractArray) = (UInt(objectid(A)),)
 dataids(A::Array) = (UInt(pointer(A)),)
 dataids(::AbstractRange) = ()
 dataids(x) = ()
+
+
+"""
+    Base.dataids_fields(A::AbstractArray)
+
+Return a tuple of `UInt`s that is a concatenation of the `dataids` of all fields of `A`.
+"""
+dataids_fields(A::AbstractArray) =
+    _splatmap(dataids, ntuple(i -> getfield(A,i), Val(nfields(A))))
 
 ## get (getindex with a default value) ##
 
