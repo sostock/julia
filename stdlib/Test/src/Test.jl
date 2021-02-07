@@ -1726,6 +1726,49 @@ function _check_bitarray_consistency(B::BitArray{N}) where N
     return true
 end
 
+"""
+`UnaliasArray` is a `DenseArray` for which `copy(::UnaliasArray)` returns a different type
+(an `Array`). It can be used to test that a type implements `Base.unaliascopy` correctly.
+"""
+struct UnaliasTestArray{T,N} <: DenseArray{T,N}
+    a::Array{T,N}
+end
+
+UnaliasTestArray{T}(args...) where {T} = UnaliasTestArray(Array{T}(args...))
+UnaliasTestArray{T,N}(args...) where {T,N} = UnaliasTestArray(Array{T,N}(args...))
+
+Base.keys(a::UnaliasTestArray) = keys(a.a)
+Base.axes(a::UnaliasTestArray) = axes(a.a)
+Base.length(a::UnaliasTestArray) = length(a.a)
+Base.size(a::UnaliasTestArray) = size(a.a)
+Base.IndexStyle(::Type{<:UnaliasTestArray}) = IndexLinear()
+Base.getindex(a::UnaliasTestArray, i::Int) = a.a[i]
+Base.setindex!(a::UnaliasTestArray, x, i::Int) = a.a[i] = x
+
+Base.similar(A::UnaliasTestArray, s::Integer...) = UnaliasTestArray(similar(A.a, s...))
+
+Base.copy(a::UnaliasTestArray) = copy(a.a)
+Base.dataids(a::UnaliasTestArray) = Base.dataids(a.a)
+Base.unaliascopy(a::UnaliasTestArray) = typeof(a)(Base.unaliascopy(a.a))
+Base.unsafe_convert(::Type{Ptr{T}}, a::UnaliasTestArray{T}) where {T} =
+    Base.unsafe_convert(Ptr{T}, a.a)
+
+"""
+    test_aliasing_detection(A, arrays...)
+
+For an array `A` and arrays `arrays` that are aliased with `A`, run some tests to check
+that aliasing-detection works.
+"""
+function test_aliasing_detection(A, arrays...)
+    @test typeof(Base.unaliascopy(A)) === typeof(A)
+    @test isequal(@inferred(Base.unaliascopy(A)), A)
+    @test !Base.mightalias(Base.unaliascopy(A), A)
+    for arr in arrays
+        @test Base.mightalias(A, arr)
+        @test !Base.mightalias(Base.unaliascopy(A), arr)
+    end
+end
+
 # 0.7 deprecations
 
 begin

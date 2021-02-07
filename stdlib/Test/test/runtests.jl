@@ -1138,3 +1138,11 @@ let errors = @testset NoThrowTestSet begin
         @test occursin("Expression: !(1 < 2 < missing < 4)", str)
     end
 end
+
+@testset "UnaliasTestArray" begin
+    a = rand(5,5,5)
+    A = Test.UnaliasTestArray(a)
+    @test copy(A) == A
+    @test typeof(copy(A)) !== typeof(A)
+    Test.test_aliasing_detection(A, a)
+end
