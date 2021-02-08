@@ -45,6 +45,9 @@ for t in (:LowerTriangular, :UnitLowerTriangular, :UpperTriangular,
 
         copy(A::$t) = $t(copy(A.data))
 
+        Base.dataids(A::$t) = Base.dataids(A.data)
+        Base.unaliascopy(A::$t) = typeof(A)(Base.unaliascopy(A.data))
+
         real(A::$t{<:Real}) = A
         real(A::$t{<:Complex}) = (B = real(A.data); $t(B))
     end

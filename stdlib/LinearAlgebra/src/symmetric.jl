@@ -299,6 +299,9 @@ function copyto!(dest::Hermitian, src::Hermitian)
     return dest
 end
 
+Base.dataids(A::HermOrSym) = Base.dataids(A.data)
+Base.unaliascopy(A::HermOrSym) = typeof(A)(Base.unaliascopy(A.data), A.uplo)
+
 # fill[stored]!
 fill!(A::HermOrSym, x) = fillstored!(A, x)
 function fillstored!(A::HermOrSym{T}, x) where T

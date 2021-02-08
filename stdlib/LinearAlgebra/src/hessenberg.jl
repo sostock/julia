@@ -60,6 +60,9 @@ parent(H::UpperHessenberg) = H.data
 similar(H::UpperHessenberg, ::Type{T}) where {T} = UpperHessenberg(similar(H.data, T))
 similar(H::UpperHessenberg, ::Type{T}, dims::Dims{N}) where {T,N} = similar(H.data, T, dims)
 
+Base.dataids(H::UpperHessenberg) = Base.dataids(H.data)
+Base.unaliascopy(H::UpperHessenberg) = typeof(H)(Base.unaliascopy(H.data))
+
 copy(H::UpperHessenberg) = UpperHessenberg(copy(H.data))
 real(H::UpperHessenberg{<:Real}) = H
 real(H::UpperHessenberg{<:Complex}) = UpperHessenberg(triu!(real(H.data),-1))
@@ -451,6 +454,9 @@ struct HessenbergQ{T,S<:AbstractMatrix,W<:AbstractVector,sym} <: AbstractQ{T}
 end
 HessenbergQ(F::Hessenberg{<:Any,<:UpperHessenberg,S,W}) where {S,W} = HessenbergQ{eltype(F.factors),S,W,false}(F.uplo, F.factors, F.τ)
 HessenbergQ(F::Hessenberg{<:Any,<:SymTridiagonal,S,W}) where {S,W} = HessenbergQ{eltype(F.factors),S,W,true}(F.uplo, F.factors, F.τ)
+
+Base.dataids(Q::HessenbergQ) = (Base.dataids(Q.factors)..., Base.dataids(Q.τ)...)
+Base.unaliascopy(Q::HessenbergQ) = typeof(Q)(Q.uplo, Base.unaliascopy(Q.factors), Base.unaliascopy(Q.τ))
 
 function getproperty(F::Hessenberg, d::Symbol)
     d === :Q && return HessenbergQ(F)

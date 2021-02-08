@@ -63,6 +63,9 @@ AbstractMatrix{T}(D::Diagonal) where {T} = Diagonal{T}(D)
 Matrix(D::Diagonal) = diagm(0 => D.diag)
 Array(D::Diagonal) = Matrix(D)
 
+Base.dataids(D::Diagonal) = Base.dataids(D.diag)
+Base.unaliascopy(D::Diagonal) = typeof(D)(Base.unaliascopy(D.diag))
+
 # For D<:Diagonal, similar(D[, neweltype]) should yield a Diagonal matrix.
 # On the other hand, similar(D, [neweltype,] shape...) should yield a sparse matrix.
 # The first method below effects the former, and the second the latter.

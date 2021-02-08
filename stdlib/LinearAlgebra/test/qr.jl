@@ -322,4 +322,14 @@ end
     end
 end
 
+@testset "aliasing" begin
+    # QRPackedQ
+    factors = Test.UnaliasTestArray(rand(5,5))
+    τ = rand(4)
+    Test.test_aliasing_detection(LinearAlgebra.QRPackedQ(factors, τ), factors, τ)
+    # QRCompactWYQ
+    T = rand(5,5)
+    Test.test_aliasing_detection(LinearAlgebra.QRCompactWYQ(factors, T), factors, T)
+end
+
 end # module TestQR

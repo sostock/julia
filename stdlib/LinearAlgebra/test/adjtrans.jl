@@ -557,4 +557,10 @@ end
     @test transpose(Int[]) * Int[] == 0
 end
 
+@testset "aliasing" begin
+    A = Test.UnaliasTestArray(rand(ComplexF64, 5, 5))
+    Test.test_aliasing_detection(adjoint(A), A)
+    Test.test_aliasing_detection(transpose(A), A)
+end
+
 end # module TestAdjointTranspose

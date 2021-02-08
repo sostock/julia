@@ -192,6 +192,9 @@ AbstractMatrix{T}(A::Bidiagonal) where {T} = convert(Bidiagonal{T}, A)
 
 convert(T::Type{<:Bidiagonal}, m::AbstractMatrix) = m isa T ? m : T(m)
 
+Base.dataids(A::Bidiagonal) = (Base.dataids(A.dv)..., Base.dataids(A.ev)...)
+Base.unaliascopy(A::Bidiagonal) = typeof(A)(Base.unaliascopy(A.dv), Base.unaliascopy(A.ev), A.uplo)
+
 # For B<:Bidiagonal, similar(B[, neweltype]) should yield a Bidiagonal matrix.
 # On the other hand, similar(B, [neweltype,] shape...) should yield a sparse matrix.
 # The first method below effects the former, and the second the latter.

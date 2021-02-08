@@ -63,6 +63,8 @@ struct LQPackedQ{T,S<:AbstractMatrix} <: AbstractMatrix{T}
 end
 LQPackedQ(factors::AbstractMatrix{T}, τ::Vector{T}) where {T} = LQPackedQ{T,typeof(factors)}(factors, τ)
 
+Base.dataids(Q::LQPackedQ) = (Base.dataids(Q.factors)..., Base.dataids(Q.τ)...)
+Base.unaliascopy(Q::LQPackedQ) = typeof(Q)(Base.unaliascopy(Q.factors), Base.unaliascopy(Q.τ))
 
 """
     lq!(A) -> LQ

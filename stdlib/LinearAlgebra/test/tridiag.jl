@@ -587,4 +587,14 @@ end
     @test F.values ≈ F2.values
 end
 
+@testset "aliasing" begin
+    dl = Test.UnaliasTestArray(rand(4))
+    d = Test.UnaliasTestArray(rand(5))
+    du = Test.UnaliasTestArray(rand(4))
+    du2 = Test.UnaliasTestArray(rand(3))
+    Test.test_aliasing_detection(SymTridiagonal(d, du), d, du)
+    Test.test_aliasing_detection(Tridiagonal(dl, d, du), dl, d, du)
+    Test.test_aliasing_detection(Tridiagonal(dl, d, du, du2), dl, d, du)
+end
+
 end # module TestTridiagonal

@@ -635,4 +635,11 @@ end
     @test ubd .* 3 == ubd
 end
 
+@testset "aliasing" begin
+    dv = Test.UnaliasTestArray(rand(5))
+    ev = Test.UnaliasTestArray(rand(4))
+    Test.test_aliasing_detection(Bidiagonal(dv, ev, :L), dv, ev)
+    Test.test_aliasing_detection(Bidiagonal(dv, ev, :U), dv, ev)
+end
+
 end # module TestBidiagonal

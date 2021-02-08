@@ -735,4 +735,9 @@ end
     @test dot(zeros(Int32, 0), Diagonal(zeros(Int, 0)), zeros(Int16, 0)) === 0
 end
 
+@testset "aliasing" begin
+    d = Test.UnaliasTestArray(rand(5))
+    Test.test_aliasing_detection(Diagonal(d), d)
+end
+
 end # module TestDiagonal

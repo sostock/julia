@@ -203,4 +203,10 @@ end
     end
 end
 
+@testset "aliasing" begin
+    factors = rand(5,5)
+    τ = rand(4)
+    Test.test_aliasing_detection(LinearAlgebra.LQPackedQ(factors, τ), factors, τ)
+end
+
 end # module TestLQ

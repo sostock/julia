@@ -724,4 +724,12 @@ let A = [0.9999999999999998 4.649058915617843e-16 -1.3149405273715513e-16 9.9959
     B = [0.09648289218436859 0.023497875751503007 0.0 0.0; 0.023497875751503007 0.045787575150300804 0.0 0.0; 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0]
     @test sqrt(A*B*A')^2 ≈ A*B*A'
 end
+
+@testset "aliasing" begin
+    A = Test.UnaliasTestArray(rand(5,5))
+    for T = (LowerTriangular, UnitLowerTriangular, UpperTriangular, UnitUpperTriangular)
+        Test.test_aliasing_detection(T(A), A)
+    end
+end
+
 end # module TestTriangular

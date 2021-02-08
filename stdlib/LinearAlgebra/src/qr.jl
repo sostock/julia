@@ -489,6 +489,9 @@ function QRPackedQ{T}(factors::AbstractMatrix, τ::AbstractVector) where {T}
     QRPackedQ(convert(AbstractMatrix{T}, factors), convert(Vector{T}, τ))
 end
 
+Base.dataids(Q::QRPackedQ) = (Base.dataids(Q.factors)..., Base.dataids(Q.τ)...)
+Base.unaliascopy(Q::QRPackedQ) = typeof(Q)(Base.unaliascopy(Q.factors), Base.unaliascopy(Q.τ))
+
 """
     QRCompactWYQ <: AbstractMatrix
 
@@ -508,6 +511,9 @@ QRCompactWYQ(factors::AbstractMatrix{S}, T::Matrix{S}) where {S} = QRCompactWYQ{
 function QRCompactWYQ{S}(factors::AbstractMatrix, T::AbstractMatrix) where {S}
     QRCompactWYQ(convert(AbstractMatrix{S}, factors), convert(Matrix{S}, T))
 end
+
+Base.dataids(Q::QRCompactWYQ) = (Base.dataids(Q.factors)..., Base.dataids(Q.T)...)
+Base.unaliascopy(Q::QRCompactWYQ) = typeof(Q)(Base.unaliascopy(Q.factors), Base.unaliascopy(Q.T))
 
 QRPackedQ{T}(Q::QRPackedQ) where {T} = QRPackedQ(convert(AbstractMatrix{T}, Q.factors), convert(Vector{T}, Q.τ))
 AbstractMatrix{T}(Q::QRPackedQ{T}) where {T} = Q

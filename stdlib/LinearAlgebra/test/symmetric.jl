@@ -727,4 +727,11 @@ end
     end
 end
 
+@testset "aliasing" begin
+    A = Test.UnaliasTestArray(rand(ComplexF64,5,5))
+    for T = (Hermitian, Symmetric), uplo = (:L, :U)
+        Test.test_aliasing_detection(T(A, uplo), A)
+    end
+end
+
 end # module TestSymmetric

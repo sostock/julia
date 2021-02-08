@@ -133,4 +133,16 @@ end
     @test Base.propertynames(F, true) == (:Q, :H, :μ, :τ, :factors, :uplo)
 end
 
+@testset "aliasing" begin
+    # HessenbergQ
+    A = Test.UnaliasTestArray(rand(5,5))
+    τ = Test.UnaliasTestArray(rand(4))
+    for uplo = ('L', 'U'), sym = (true, false)
+        Q = LinearAlgebra.HessenbergQ{Float64, typeof(A), typeof(τ), sym}(uplo, A, τ)
+        Test.test_aliasing_detection(Q, A, τ)
+    end
+    # UpperHessenberg
+    Test.test_aliasing_detection(UpperHessenberg(A), A)
+end
+
 end # module TestHessenberg
