@@ -66,6 +66,9 @@ function Base.strides(A::PermutedDimsArray{T,N,perm}) where {T,N,perm}
 end
 Base.elsize(::Type{<:PermutedDimsArray{<:Any, <:Any, <:Any, <:Any, P}}) where {P} = Base.elsize(P)
 
+Base.dataids(A::PermutedDimsArray) = Base.dataids(A.parent)
+Base.unaliascopy(A::PermutedDimsArray) = typeof(A)(Base.unaliascopy(A.parent))
+
 @inline function Base.getindex(A::PermutedDimsArray{T,N,perm,iperm}, I::Vararg{Int,N}) where {T,N,perm,iperm}
     @boundscheck checkbounds(A, I...)
     @inbounds val = getindex(A.parent, genperm(I, iperm)...)

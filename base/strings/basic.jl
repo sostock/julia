@@ -742,6 +742,7 @@ elsize(s::Type{<:CodeUnits{T}}) where {T} = sizeof(T)
 IndexStyle(::Type{<:CodeUnits}) = IndexLinear()
 @inline iterate(s::CodeUnits, i=1) = (i % UInt) - 1 < length(s) ? (@inbounds s[i], i + 1) : nothing
 
+dataids(::CodeUnits) = ()
 
 write(io::IO, s::CodeUnits) = write(io, s.s)
 

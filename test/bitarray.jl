@@ -1663,3 +1663,8 @@ end
     @check_bit_operation all!(falses(100), trues(100, 100))
     @check_bit_operation all!(falses(1000), trues(1000, 100))
 end
+
+@testset "aliasing" begin
+    Test.test_aliasing_detection(falses(10))
+    Test.test_aliasing_detection(trues(10,10))
+end

@@ -1299,3 +1299,34 @@ end
     @test A′.f3 === A.f3
     @test A′.f4 == A.f4
 end
+
+@testset "aliasing" begin
+    # Array
+    let A = rand(2, 3, 4)
+        Test.test_aliasing_detection(A, A)
+    end
+    # PermutedDimsArray
+    for (A, dims) = ((Test.UnaliasTestArray(rand(3,4)), (2,1)),
+                     (Test.UnaliasTestArray(rand(2,3,4)), (3,1,2)))
+        Test.test_aliasing_detection(PermutedDimsArray(A, dims), A)
+    end
+    # SubArray
+    let A = Test.UnaliasTestArray(rand(5,10))
+        Test.test_aliasing_detection(view(A, 2:3, 1:3), A)
+        @test Base.mightalias(view(A, 1:3, 2:5), view(A, 2:4, 3:6))
+        @test !Base.mightalias(view(A, 1:3, 2:5), view(A, 2:4, 6:9))
+        @test !Base.mightalias(view(A, 1:3, 2:5), view(A, 5:5, 6:9))
+    end
+    # Base.ReshapedArray
+    for A = (Test.UnaliasTestArray(rand(2,2,2)),
+             Test.UnaliasTestArray(rand(8,5)))
+        Test.test_aliasing_detection(reshape(A, 4, :), A)
+    end
+    # Immutable AbstractArrays
+    for A = (CartesianIndices((1:5, 1:5)),
+             LinearIndices((1:5, 1:5)),
+             Base.CodeUnits("test"),
+             Base.SCartesianIndices2{2}(1:5))
+        @test !Base.mightalias(A, A)
+    end
+end

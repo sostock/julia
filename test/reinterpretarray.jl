@@ -369,10 +369,14 @@ ars = reinterpret(reshape, Int, a)
     @test size(as) == (4,)
 end
 
-
 @testset "aliasing" begin
-    a = reinterpret(NTuple{2,Float64}, rand(Float64, 4, 4))
-    @test typeof(Base.unaliascopy(a)) === typeof(a)
-    a = reinterpret(reshape, NTuple{4,Float64}, rand(Float64, 4, 4))
-    @test typeof(Base.unaliascopy(a)) === typeof(a)
+    for A = (Test.UnaliasTestArray(rand(Float64,4,5)),
+             Test.UnaliasTestArray(rand(Float64,4,5,5)))
+        Test.test_aliasing_detection(reinterpret(NTuple{2,Int32}, A), A)
+        Test.test_aliasing_detection(reinterpret(NTuple{2,Int64}, A), A)
+        Test.test_aliasing_detection(reinterpret(ComplexF64, A), A)
+        Test.test_aliasing_detection(reinterpret(reshape, Int64, A), A)
+        Test.test_aliasing_detection(reinterpret(reshape, Int32, A), A)
+        Test.test_aliasing_detection(reinterpret(reshape, NTuple{4,Float64}, A), A)
+    end
 end
