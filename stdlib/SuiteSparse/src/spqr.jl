@@ -144,6 +144,9 @@ Base.axes(Q::QRSparseQ) = map(Base.OneTo, size(Q))
 
 Matrix{T}(Q::QRSparseQ) where {T} = lmul!(Q, Matrix{T}(I, size(Q, 1), min(size(Q, 1), Q.n)))
 
+Base.dataids(Q::QRSparseQ) = (Base.dataids(Q.factors)..., Base.dataids(Q.τ)...)
+Base.unaliascopy(Q::QRSparseQ) = typeof(Q)(Base.unaliascopy(Q.factors), Base.unaliascopy(Q.τ), Q.n)
+
 # From SPQR manual p. 6
 _default_tol(A::SparseMatrixCSC) =
     20*sum(size(A))*eps(real(eltype(A)))*maximum(norm(view(A, :, i)) for i in 1:size(A, 2))

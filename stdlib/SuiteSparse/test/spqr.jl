@@ -133,4 +133,11 @@ end
     @test all(iszero, (rank(spzeros(10, i)) for i in 1:10))
 end
 
+@testset "aliasing" begin
+    factors = sprand(Float64, 5, 5, 1.0)
+    τ = rand(Float64, 5)
+    Q = SPQR.QRSparseQ{Float64,Int}(factors, τ, 5)
+    Test.test_aliasing_detection(Q, factors, τ)
+end
+
 end
