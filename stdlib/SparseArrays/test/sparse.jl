@@ -3159,4 +3159,12 @@ end
     end
 end
 
+@testset "aliasing" begin
+    colptr = [1,1,3,3,4,4]
+    rowval = [2, 4, 4]
+    nzval = [1, 2, 3]
+    S = SparseMatrixCSC{Int,Int}(5, 5, colptr, rowval, nzval)
+    Test.test_aliasing_detection(S, colptr, rowval, nzval)
+end
+
 end # module

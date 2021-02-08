@@ -1481,4 +1481,11 @@ end
     end
 end
 
+@testset "aliasing" begin
+    nzind = [2, 5]
+    nzval = [1.0, 2.0]
+    S = SparseVector(10, nzind, nzval)
+    Test.test_aliasing_detection(S, nzind, nzval)
+end
+
 end # module
